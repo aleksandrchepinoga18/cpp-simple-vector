@@ -1,72 +1,79 @@
 #pragma once
- 
-#include <stdexcept>
-#include <algorithm>
-#include <cassert>
 #include <cstdlib>
+#include <algorithm>
+ 
+using namespace std;
  
 template <typename Type>
 class ArrayPtr {
 public:
- 
     ArrayPtr() = default;
  
     explicit ArrayPtr(size_t size) {
-        if (size) {
-            simple_vector_ = new Type[size]();
-        } else {
-            simple_vector_= nullptr;
+        if (size == 0) {
+            raw_ptr_ = nullptr;
         }
+        else {
+            raw_ptr_ = new Type[size];
+        }
+    }
+ 
+    explicit ArrayPtr(Type* raw_ptr) noexcept {
+        raw_ptr_ = raw_ptr;
+    }
+ 
+    explicit ArrayPtr(ArrayPtr&& ptr) noexcept {
+        if (raw_ptr_ != ptr.Get()) {
+            raw_ptr_ = ptr.Release();
+        }
+    }
+    ArrayPtr& operator=(ArrayPtr&& other) {
+        raw_ptr_ = std::move(other.raw_ptr_);
+       return  *this;
     }
  
     ArrayPtr(const ArrayPtr&) = delete;
-    
-    ArrayPtr& operator=(const ArrayPtr&) = delete;
-    
-    ArrayPtr(ArrayPtr&& other) {
-        std::swap(simple_vector_, other.simple_vector_);
-        other.simple_vector_ = nullptr;
-    }
-    
-    ArrayPtr& operator=(ArrayPtr&& other) {
-        if (this != &other) {
-            std::swap(simple_vector_, other.simple_vector_);
-        }
-        return *this;
-    }
  
     ~ArrayPtr() {
-        if(simple_vector_){
-            delete[] simple_vector_;
-        }
+        delete[] raw_ptr_;
+        raw_ptr_ = nullptr;
     }
-    
+ 
+    ArrayPtr& operator=(const ArrayPtr&) = delete;
+ 
     [[nodiscard]] Type* Release() noexcept {
-        Type* helper = simple_vector_;
-        simple_vector_= nullptr;
-        return helper;
-    }
-    
-    Type* Get() const noexcept {
-        return simple_vector_;
+        Type* raw_ptr = raw_ptr_;
+        raw_ptr_ = nullptr;
+        return raw_ptr;
     }
  
     Type& operator[](size_t index) noexcept {
-        return simple_vector_[index];
+        return *(raw_ptr_ + index);
     }
  
     const Type& operator[](size_t index) const noexcept {
-        return simple_vector_[index];
+        return *(raw_ptr_ + index);
     }
  
     explicit operator bool() const {
-        return simple_vector_;
+        if (raw_ptr_ == nullptr) {
+            return false;
+        }
+        else {
+            return true;
+        }
+    }
+ 
+    Type* Get() const noexcept {
+        return raw_ptr_;
     }
  
     void swap(ArrayPtr& other) noexcept {
-        std::swap(simple_vector_, other.simple_vector_);
+        Type* temp = raw_ptr_;
+        raw_ptr_ = other.raw_ptr_;
+        other.raw_ptr_ = temp;
     }
  
 private:
-    Type* simple_vector_ = nullptr;
+    Type* raw_ptr_ = nullptr;
 };
