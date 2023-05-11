@@ -158,7 +158,8 @@ std::copy(init.begin(), init.end(), simple_vector_.Get());
         size_t new_capacity = capacity_ == 0 ? 1 : 2 * capacity_;
             ArrayPtr<Type> helper(new_capacity);
             std::copy(begin(), end(), helper.Get());     
-           std::fill(helper.Get() + size_, helper.Get() + capacity_, Type()); 
+           std::fill(helper.Get() + size_, helper.Get() + capacity_, Type());
+            simple_vector_[size_++] = item;
             simple_vector_.swap(helper);             
             capacity_ = new_capacity;
         }
@@ -183,6 +184,7 @@ std::copy(init.begin(), init.end(), simple_vector_.Get());
     }
  
     Iterator Insert(ConstIterator pos, const Type& value) {
+    assert(pos >= begin() && pos <= end());
         size_t new_element = pos - simple_vector_.Get();
           for (auto current_pos = (Iterator)pos; current_pos != end() - 1; ++current_pos)
             *current_pos = std::move(*(current_pos + 1));
@@ -204,6 +206,7 @@ std::copy(init.begin(), init.end(), simple_vector_.Get());
     }
   
 Iterator Insert(ConstIterator pos, Type&& value) {
+assert(pos >= begin() && pos <= end());
           size_t new_element = pos - simple_vector_.Get();
         if (size_ >= capacity_) {
           size_t new_capacity = capacity_ == 0 ? 1 : 2 * capacity_;
@@ -229,6 +232,7 @@ Iterator Insert(ConstIterator pos, Type&& value) {
     }
  
      Iterator Erase(ConstIterator pos) {
+     assert(pos >= begin() && pos <= end());
         size_t index = pos - simple_vector_.Get();
         for (auto current_pos = (Iterator)pos; current_pos != end() - 1; ++current_pos)
             *current_pos = std::move(*(current_pos + 1));
